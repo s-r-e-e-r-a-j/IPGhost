@@ -72,14 +72,14 @@ EOF
 # Start Tor service
 initialize_tor() {
     echo -e "${GREEN}[+] Starting Tor service...${RESET}"
-    sudo service tor start
+    sudo systemctl start tor || sudo service tor start
     echo -e "${GREEN}[+] Tor service started.${RESET}"
 }
 
 # Stop Tor service when exiting
 cleanup() {
     echo -e "${RED}[!] Stopping Tor service...${RESET}"
-    sudo service tor stop
+    sudo systemctl stop tor || sudo service tor stop
     echo -e "${RED}[!] Tor service stopped.${RESET}"
     exit 0
 }
@@ -90,7 +90,7 @@ trap cleanup SIGINT SIGTERM
 # change identity using Tor
 change_identity() {
     echo -e "${YELLOW}[~] Changing identity...${RESET}"
-    sudo service tor reload
+    sudo systemctl reload tor || sudo service tor reload
     echo -e "${YELLOW}[~] Identity changed.${RESET}"
 }
 
