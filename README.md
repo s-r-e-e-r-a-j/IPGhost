@@ -113,10 +113,10 @@ To route your internet traffic through Tor, configure your applications to use t
    | | |  ___/  | | |_ | '_ \ / _ \/ __| __|
   _| |_| |      | |__| | | | | (_) \__ \ |_ 
  |_____|_|       \_____|_| |_|\___/|___/\__|
-                                            
+
+                        Developer: Sreeraj                                            
                                             
 
-* Copyright © Sreeraj, 2024  *
 * GitHub: https://github.com/s-r-e-e-r-a-j  *
 
 Change your SOCKS to 127.0.0.1:9050
