@@ -116,7 +116,6 @@ To route your internet traffic through Tor, configure your applications to use t
 
                         Developer: Sreeraj                                            
                                             
-
 * GitHub: https://github.com/s-r-e-e-r-a-j  
 
 Change your SOCKS to 127.0.0.1:9050
