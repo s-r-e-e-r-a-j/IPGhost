@@ -26,6 +26,9 @@ IPGhost is a strong tool for ethical hackers. It helps you stay private and anon
 
 - Active internet connection.
 
+## Disclaimer 
+IPGhost is an educational and ethical hacking tool designed to enhance online privacy using the Tor network. Use it responsibly and only for legal purposes. The developer assumes no liability for misuse of this tool.
+
 ## Installation
 
 **Step 1: Download and Install**
