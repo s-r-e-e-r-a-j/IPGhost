@@ -20,7 +20,13 @@ IPGhost is a strong tool for ethical hackers. It helps you stay private and anon
 
 ## Requirements
 
-- Linux distributions `Debian`, `Rhel`, `Arch` (eg.,kali linux, parrot os,   Ubuntu, Arch linux, Black Arch, fedora, etc.).
+- This tool supports most major Linux distributions, including:
+
+   - **Debian-based:** Kali Linux, Parrot OS, Ubuntu
+
+   - **RHEL-based:** Fedora, CentOS, Red Hat Enterprise Linux
+
+   - **Arch-based:** Arch Linux, BlackArch, Manjaro
 
 - Root privileges to install dependencies and manage the Tor service.
 
