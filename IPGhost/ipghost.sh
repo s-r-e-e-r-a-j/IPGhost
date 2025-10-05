@@ -15,14 +15,39 @@ check_sudo() {
     fi
 }
 
-# Function to check and install dependencies
+# Function to check and install dependencies (Debian, RHEL, Arch support)
 install_dependencies() {
     echo -e "${GREEN}[+] Checking dependencies...${RESET}"
+
+    # Detect package manager
+    if command -v apt >/dev/null 2>&1; then
+        PKG_MANAGER="apt"
+        INSTALL_CMD="sudo apt install -y"
+        UPDATE_CMD="sudo apt update -y"
+    elif command -v dnf >/dev/null 2>&1; then
+        PKG_MANAGER="dnf"
+        INSTALL_CMD="sudo dnf install -y"
+        UPDATE_CMD="sudo dnf update -y"
+    elif command -v yum >/dev/null 2>&1; then
+        PKG_MANAGER="yum"
+        INSTALL_CMD="sudo yum install -y"
+        UPDATE_CMD="sudo yum update -y"
+    elif command -v pacman >/dev/null 2>&1; then
+        PKG_MANAGER="pacman"
+        INSTALL_CMD="sudo pacman -S --noconfirm"
+        UPDATE_CMD="sudo pacman -Sy"
+    else
+        echo -e "${RED}[!] Unsupported Linux distribution. Please install dependencies manually.${RESET}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}[+] Detected package manager: $PKG_MANAGER${RESET}"
+    $UPDATE_CMD
 
     # Check and install Tor
     if ! command -v tor >/dev/null 2>&1; then
         echo -e "${RED}[!] Tor is not installed. Installing Tor...${RESET}"
-        sudo apt update && sudo apt install tor -y
+        $INSTALL_CMD tor
         echo -e "${GREEN}[+] Tor installed successfully.${RESET}"
     else
         echo -e "${GREEN}[+] Tor is already installed.${RESET}"
@@ -31,7 +56,7 @@ install_dependencies() {
     # Check and install curl
     if ! command -v curl >/dev/null 2>&1; then
         echo -e "${RED}[!] curl is not installed. Installing curl...${RESET}"
-        sudo apt install curl -y
+        $INSTALL_CMD curl
         echo -e "${GREEN}[+] curl installed successfully.${RESET}"
     else
         echo -e "${GREEN}[+] curl is already installed.${RESET}"
@@ -40,7 +65,7 @@ install_dependencies() {
     # Check and install jq
     if ! command -v jq >/dev/null 2>&1; then
         echo -e "${RED}[!] jq is not installed. Installing jq...${RESET}"
-        sudo apt install jq -y
+        $INSTALL_CMD jq
         echo -e "${GREEN}[+] jq installed successfully.${RESET}"
     else
         echo -e "${GREEN}[+] jq is already installed.${RESET}"
