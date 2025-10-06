@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Prompt the user for installation or uninstallation
 echo "[+] To install, press (Y). To uninstall, press (N): "
