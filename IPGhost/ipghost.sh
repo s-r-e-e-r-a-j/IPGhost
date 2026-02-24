@@ -35,7 +35,7 @@ install_dependencies() {
     elif command -v pacman >/dev/null 2>&1; then
         PKG_MANAGER="pacman"
         INSTALL_CMD="sudo pacman -S --noconfirm"
-        UPDATE_CMD="sudo pacman -Sy"
+        UPDATE_CMD="sudo pacman -Syu"
     else
         echo -e "${RED}[!] Unsupported Linux distribution. Please install dependencies manually.${RESET}"
         exit 1
