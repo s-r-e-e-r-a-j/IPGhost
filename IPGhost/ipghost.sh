@@ -33,7 +33,7 @@ install_dependencies() {
     if command -v apt >/dev/null 2>&1; then
         PKG_MANAGER="apt"
         INSTALL_CMD="sudo apt install -y"
-        UPDATE_CMD="sudo apt upgrade -y"
+        UPDATE_CMD="sudo apt update && sudo apt upgrade -y"
     elif command -v dnf >/dev/null 2>&1; then
         PKG_MANAGER="dnf"
         INSTALL_CMD="sudo dnf install -y"
