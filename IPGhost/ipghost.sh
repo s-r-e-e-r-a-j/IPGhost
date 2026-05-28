@@ -7,12 +7,16 @@ GREEN="\033[92m"
 YELLOW="\033[93m"
 RED="\033[91m"
 
-updated_packages=0
-DISTRO=""
 TOR_SERVICE="tor"
 
-if systemctl list-unit-files | grep -q "tor@default.service"; then
+if systemctl list-unit-files | grep -q "^tor@default.service"; then
     TOR_SERVICE="tor@default"
+elif systemctl list-unit-files | grep -q "^tor.service"; then
+    TOR_SERVICE="tor"
+elif systemctl list-units --type=service | grep -q "^tor@default.service"; then
+    TOR_SERVICE="tor@default"
+elif systemctl list-units --type=service | grep -q "^tor.service"; then
+    TOR_SERVICE="tor"
 fi
 
 # Check if the user is running as root or with sudo
@@ -33,7 +37,7 @@ install_dependencies() {
     if command -v apt >/dev/null 2>&1; then
         PKG_MANAGER="apt"
         INSTALL_CMD="sudo apt install -y"
-        UPDATE_CMD="sudo apt update && sudo apt upgrade -y"
+        UPDATE_CMD="sudo apt update"
     elif command -v dnf >/dev/null 2>&1; then
         PKG_MANAGER="dnf"
         INSTALL_CMD="sudo dnf install -y"
@@ -44,9 +48,8 @@ install_dependencies() {
         UPDATE_CMD="sudo yum update -y"
     elif command -v pacman >/dev/null 2>&1; then
         PKG_MANAGER="pacman"
-        DISTRO="arch"
         INSTALL_CMD="sudo pacman -S --noconfirm"
-        UPDATE_CMD="sudo pacman -Syu"
+        UPDATE_CMD="sudo pacman -Syu --noconfirm"
     else
         echo -e "${RED}[!] Unsupported Linux distribution. Please install dependencies manually.${RESET}"
         exit 1
@@ -58,7 +61,6 @@ install_dependencies() {
 
     for dep in "${dependencies[@]}"; do
         if ! command -v "$dep" >/dev/null 2>&1; then
-            updated_packages=1
             missing_deps=1
             break
         fi
@@ -167,45 +169,6 @@ fetch_ip_and_location() {
     fi
 }
 
-
-check_reboot_required() {
-    reboot_needed=0
-
-    current_kernel="$(uname -r)"
-    latest_kernel="$(ls /lib/modules 2>/dev/null | sort -V | tail -n1)"
-
-    # Debian reboot flag
-    [ -f /var/run/reboot-required ] && reboot_needed=1
-
-    # Kernel mismatch
-    if [ -n "$latest_kernel" ] && [ "$current_kernel" != "$latest_kernel" ]; then
-        reboot_needed=1
-    fi
-
-    # RHEL/Fedora reboot detection
-    if command -v needs-restarting >/dev/null 2>&1; then
-        needs-restarting -r >/dev/null 2>&1
-        [ $? -eq 1 ] && reboot_needed=1
-    fi
-
-    # Arch Linux reboot recommendation
-    if [ "$DISTRO" = "arch" ] && [ "$updated_packages" -eq 1 ]; then
-        reboot_needed=1
-    fi
-
-    if [ "$reboot_needed" -eq 1 ]; then
-        echo -e "${YELLOW}[!] Reboot recommended after system upgrades.${RESET}"
-
-        read -rp "Reboot now? [y/N]: " answer
-
-        case "$answer" in
-            [Yy]|[Yy][Ee][Ss])
-                reboot
-                ;;
-        esac
-    fi
-}
-
 # Main function for IP changing
 main() {
     display_banner
@@ -240,6 +203,5 @@ check_sudo
 
 # Ensure dependencies are installed and start the script
 install_dependencies
-[ "$updated_packages" -eq 1 ] && check_reboot_required
 # Start IP changing
 main
