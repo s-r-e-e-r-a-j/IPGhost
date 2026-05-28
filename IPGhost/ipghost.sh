@@ -7,6 +7,14 @@ GREEN="\033[92m"
 YELLOW="\033[93m"
 RED="\033[91m"
 
+updated_packages=0
+DISTRO=""
+TOR_SERVICE="tor"
+
+if systemctl list-unit-files | grep -q "tor@default.service"; then
+    TOR_SERVICE="tor@default"
+fi
+
 # Check if the user is running as root or with sudo
 check_sudo() {
     if [ "$EUID" -ne 0 ]; then
@@ -17,13 +25,15 @@ check_sudo() {
 
 # Function to check and install dependencies (Debian, RHEL, Arch support)
 install_dependencies() {
+
+    local dependencies=("curl" "jq" "tor")
     echo -e "${GREEN}[+] Checking dependencies...${RESET}"
 
     # Detect package manager
     if command -v apt >/dev/null 2>&1; then
         PKG_MANAGER="apt"
         INSTALL_CMD="sudo apt install -y"
-        UPDATE_CMD="sudo apt update -y"
+        UPDATE_CMD="sudo apt upgrade -y"
     elif command -v dnf >/dev/null 2>&1; then
         PKG_MANAGER="dnf"
         INSTALL_CMD="sudo dnf install -y"
@@ -34,6 +44,7 @@ install_dependencies() {
         UPDATE_CMD="sudo yum update -y"
     elif command -v pacman >/dev/null 2>&1; then
         PKG_MANAGER="pacman"
+        DISTRO="arch"
         INSTALL_CMD="sudo pacman -S --noconfirm"
         UPDATE_CMD="sudo pacman -Syu"
     else
@@ -42,7 +53,21 @@ install_dependencies() {
     fi
 
     echo -e "${GREEN}[+] Detected package manager: $PKG_MANAGER${RESET}"
-    $UPDATE_CMD
+
+    missing_deps=0
+
+    for dep in "${dependencies[@]}"; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            updated_packages=1
+            missing_deps=1
+            break
+        fi
+    done
+
+    if [ "$missing_deps" -eq 1 ]; then
+       echo -e "${GREEN}[+] Updating package database...${RESET}"
+       $UPDATE_CMD
+    fi
 
     # Check and install Tor
     if ! command -v tor >/dev/null 2>&1; then
@@ -97,14 +122,14 @@ EOF
 # Start Tor service
 initialize_tor() {
     echo -e "${GREEN}[+] Starting Tor service...${RESET}"
-    sudo systemctl start tor || sudo service tor start
+    sudo systemctl start "$TOR_SERVICE" || sudo service "$TOR_SERVICE" start
     echo -e "${GREEN}[+] Tor service started.${RESET}"
 }
 
 # Stop Tor service when exiting
 cleanup() {
     echo -e "${RED}[!] Stopping Tor service...${RESET}"
-    sudo systemctl stop tor || sudo service tor stop
+    sudo systemctl stop "$TOR_SERVICE" || sudo service "$TOR_SERVICE" stop
     echo -e "${RED}[!] Tor service stopped.${RESET}"
     exit 0
 }
@@ -115,7 +140,7 @@ trap cleanup SIGINT SIGTERM
 # change identity using Tor
 change_identity() {
     echo -e "${YELLOW}[~] Changing identity...${RESET}"
-    sudo systemctl reload tor || sudo service tor reload
+    sudo systemctl reload "$TOR_SERVICE" || sudo service "$TOR_SERVICE" reload
     echo -e "${YELLOW}[~] Identity changed.${RESET}"
 }
 
@@ -139,6 +164,45 @@ fetch_ip_and_location() {
         echo -e "${GREEN}   Country: $country${RESET}"
         echo -e "${GREEN}   Region: $region${RESET}"
         echo -e "${GREEN}   City: $city${RESET}"
+    fi
+}
+
+
+check_reboot_required() {
+    reboot_needed=0
+
+    current_kernel="$(uname -r)"
+    latest_kernel="$(ls /lib/modules 2>/dev/null | sort -V | tail -n1)"
+
+    # Debian reboot flag
+    [ -f /var/run/reboot-required ] && reboot_needed=1
+
+    # Kernel mismatch
+    if [ -n "$latest_kernel" ] && [ "$current_kernel" != "$latest_kernel" ]; then
+        reboot_needed=1
+    fi
+
+    # RHEL/Fedora reboot detection
+    if command -v needs-restarting >/dev/null 2>&1; then
+        needs-restarting -r >/dev/null 2>&1
+        [ $? -eq 1 ] && reboot_needed=1
+    fi
+
+    # Arch Linux reboot recommendation
+    if [ "$DISTRO" = "arch" ] && [ "$updated_packages" -eq 1 ]; then
+        reboot_needed=1
+    fi
+
+    if [ "$reboot_needed" -eq 1 ]; then
+        echo -e "${YELLOW}[!] Reboot recommended after system upgrades.${RESET}"
+
+        read -rp "Reboot now? [y/N]: " answer
+
+        case "$answer" in
+            [Yy]|[Yy][Ee][Ss])
+                reboot
+                ;;
+        esac
     fi
 }
 
@@ -176,6 +240,6 @@ check_sudo
 
 # Ensure dependencies are installed and start the script
 install_dependencies
-
+[ "$updated_packages" -eq 1 ] && check_reboot_required
 # Start IP changing
 main
