@@ -129,8 +129,8 @@ To route your internet traffic through Tor, configure your applications to use t
 
 Change your SOCKS to 127.0.0.1:9050
 
-[+] Enter interval (seconds) between IP changes [default: 60]: 30
-[+] Enter number of IP changes (0 for infinite): 5
+[+] Enter interval (seconds) between IP changes [default: 60]: 5
+[+] Enter number of IP changes (0 for infinite): 0
 [~] Changing identity...
 [~] Identity changed.
 [+] New IP: 103.251.167.20
